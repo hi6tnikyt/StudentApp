@@ -1,4 +1,3 @@
-
 name: Build and test
 
 on:
@@ -7,26 +6,35 @@ on:
   pull_request:
     branches: [ "main" ]
 
-
-
 jobs:
   build_test:
     strategy:
       matrix:
         node-version: [20, 22, 24]
-
     runs-on: ubuntu-latest
-
     steps:
-    - name : Checkout the repository
+    - name: Checkout the repository
       uses: actions/checkout@v4
       
-    - name: Use Node.js ${{ matrix.node-version}}
+    - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
-        node-version: ${{ matrix.node-version}}
+        node-version: ${{ matrix.node-version }}
+        
     - name: Install dependencies
       run: npm install
       
     - name: Run integration tests
       run: npm test
+
+  deploy:
+    needs: build_test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+    - name: Deploy to production
+      uses: JorgeLNJunior/render-deploy@v1.5.0
+      with:
+        service_id: ${{ secrets.SERVICE_ID }}
+        api_key: ${{ secrets.RENDER_TOKEN }}
+        wait_deploy: true
